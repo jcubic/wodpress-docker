@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  db:
+    image: mysql:5.7
+    volumes:
+      - ./mysql:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: somewordpress
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+
+  postfix:
+    image: catatnight/postfix
+    environment:
+      maildomain: jcubic.pl
+      smtp_user: postfix:postfixpass
+    ports:
+      - "25:25"
+    restart: always
+    #volumes:
+    #  - ./mail.log:/var/log/mail.log
+
+  wordpress:
+    depends_on:
+      - db
+      - postfix
+    image: msmtp.ca.wordpress
+    ports:
+      - "8080:80"
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+    working_dir: /var/www/html
+    volumes:
+      - ./html:/var/www/html
+      - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+      - ./mail.ini:/usr/local/etc/php/conf.d/mail.ini
+      - ./msmtp.log:/var/log/msmtp/msmtp.log
+      - ./msmtprc:/etc/msmtprc
